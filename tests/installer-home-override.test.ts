@@ -3,7 +3,11 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  lstatSync,
+  realpathSync,
   rmSync,
+  symlinkSync,
+  utimesSync,
   writeFileSync,
 } from "fs";
 import { tmpdir } from "os";
@@ -154,5 +158,62 @@ describe("Hermes home adoption", () => {
     const restarted = await import("../src/main/installer");
 
     expect(restarted.HERMES_HOME).toBe(inheritedHome);
+  });
+});
+
+describe("Hermes venv compatibility link repair", () => {
+  let testRoot: string;
+
+  beforeEach(() => {
+    testRoot = mkdtempSync(join(tmpdir(), "hermes-desktop-venv-"));
+  });
+
+  afterEach(() => {
+    rmSync(testRoot, { recursive: true, force: true });
+  });
+
+  function createManagedVenv(id: string, modified: Date): string {
+    const venv = join(testRoot, "installs", "v1", "environments", id, "venv");
+    const bin = join(venv, process.platform === "win32" ? "Scripts" : "bin");
+    mkdirSync(bin, { recursive: true });
+    writeFileSync(
+      join(bin, process.platform === "win32" ? "python.exe" : "python"),
+      "",
+    );
+    utimesSync(venv, modified, modified);
+    return venv;
+  }
+
+  it("restores a missing venv link to the newest healthy managed environment", async () => {
+    mkdirSync(join(testRoot, "hermes-agent"), { recursive: true });
+    const older = createManagedVenv("older", new Date("2026-01-01"));
+    const newer = createManagedVenv("newer", new Date("2026-02-01"));
+    const { repairHermesVenvLink } = await import("../src/main/installer");
+
+    expect(repairHermesVenvLink(testRoot)).toBe(true);
+    const link = join(testRoot, "hermes-agent", "venv");
+    expect(lstatSync(link).isSymbolicLink()).toBe(true);
+    expect(realpathSync(link)).not.toBe(realpathSync(older));
+    expect(realpathSync(link)).toBe(realpathSync(newer));
+  });
+
+  it("replaces a dangling link but never replaces a real venv directory", async () => {
+    mkdirSync(join(testRoot, "hermes-agent"), { recursive: true });
+    createManagedVenv("healthy", new Date());
+    const link = join(testRoot, "hermes-agent", "venv");
+    symlinkSync(join(testRoot, "missing-venv"), link, "dir");
+    const { repairHermesVenvLink } = await import("../src/main/installer");
+
+    expect(repairHermesVenvLink(testRoot)).toBe(true);
+    expect(realpathSync(link)).toBe(
+      realpathSync(
+        join(testRoot, "installs", "v1", "environments", "healthy", "venv"),
+      ),
+    );
+
+    rmSync(link);
+    mkdirSync(join(link, "bin"), { recursive: true });
+    expect(repairHermesVenvLink(testRoot)).toBe(false);
+    expect(lstatSync(link).isDirectory()).toBe(true);
   });
 });

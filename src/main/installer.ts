@@ -1,9 +1,11 @@
 import { spawn, execFile, execFileSync } from "child_process";
 import {
   existsSync,
+  lstatSync,
   readFileSync,
   readdirSync,
   statSync,
+  symlinkSync,
   writeFileSync,
   unlinkSync,
 } from "fs";
@@ -210,6 +212,73 @@ function installBinariesFor(home: string): { python: string; script: string } {
         script: join(venv, "Scripts", "hermes.exe"),
       }
     : { python: join(venv, "bin", "python"), script: join(repo, "hermes") };
+}
+
+function venvPythonFor(venv: string): string {
+  return IS_WINDOWS
+    ? join(venv, "Scripts", "python.exe")
+    : join(venv, "bin", "python");
+}
+
+/**
+ * Upstream Hermes installers can keep their live venv under
+ * `installs/<version>/environments/<id>/venv` and expose it through
+ * `hermes-agent/venv`. An update can leave that compatibility link missing
+ * or dangling, even though the live environment is healthy. Restore only a
+ * missing/dangling link; a real directory is user data and is never touched.
+ */
+export function repairHermesVenvLink(home: string): boolean {
+  const repo = join(home, "hermes-agent");
+  const link = join(repo, "venv");
+  const installs = join(home, "installs");
+  if (!existsSync(repo) || !existsSync(installs)) return false;
+
+  let linkIsSymbolic = false;
+  try {
+    linkIsSymbolic = lstatSync(link).isSymbolicLink();
+  } catch {
+    // A missing path is the normal repair case.
+  }
+  // `existsSync` follows a link, so this also rejects a working junction.
+  if (existsSync(link)) return false;
+  // Never replace an ordinary directory, including a partially-created venv.
+  if (!linkIsSymbolic) {
+    try {
+      lstatSync(link);
+      return false;
+    } catch {
+      // The link does not exist, so it is safe to create below.
+    }
+  }
+
+  const candidates: { path: string; modified: number }[] = [];
+  try {
+    for (const version of readdirSync(installs, { withFileTypes: true })) {
+      if (!version.isDirectory()) continue;
+      const environments = join(installs, version.name, "environments");
+      if (!existsSync(environments)) continue;
+      for (const environment of readdirSync(environments, {
+        withFileTypes: true,
+      })) {
+        if (!environment.isDirectory()) continue;
+        const venv = join(environments, environment.name, "venv");
+        if (!existsSync(venvPythonFor(venv))) continue;
+        candidates.push({ path: venv, modified: statSync(venv).mtimeMs });
+      }
+    }
+  } catch {
+    return false;
+  }
+  const target = candidates.sort((a, b) => b.modified - a.modified)[0]?.path;
+  if (!target) return false;
+
+  try {
+    if (linkIsSymbolic) unlinkSync(link);
+    symlinkSync(target, link, IS_WINDOWS ? "junction" : "dir");
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function hermesCliArgs(args: string[] = []): string[] {
@@ -510,6 +579,7 @@ export function inspectInstallTarget(): InstallTargetInfo {
 export function validateHermesHome(dir: string): boolean {
   const home = dir?.trim();
   if (!home || !existsSync(home)) return false;
+  repairHermesVenvLink(home);
   const { python, script } = installBinariesFor(home);
   return existsSync(python) && existsSync(script);
 }
@@ -528,6 +598,8 @@ export function checkInstallStatus(): InstallStatus {
       activeProfile,
     };
   }
+
+  repairHermesVenvLink(HERMES_HOME);
 
   // Fast path: file existence is enough to gate the UI. The deep
   // `python --version` check used to run here adds 1–10s of cold-start
@@ -577,6 +649,7 @@ let _verifyCache: { ok: boolean; ts: number } | null = null;
 const VERIFY_TTL_MS = 5 * 60 * 1000;
 
 export async function verifyInstall(): Promise<boolean> {
+  repairHermesVenvLink(HERMES_HOME);
   if (!canInvokeHermesCli()) return false;
   if (_verifyCache && Date.now() - _verifyCache.ts < VERIFY_TTL_MS) {
     return _verifyCache.ok;

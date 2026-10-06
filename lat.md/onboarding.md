@@ -44,6 +44,12 @@ An adopted install wins over the exact inherited `HERMES_HOME` active during sel
 
 [[tests/installer-home-override.test.ts]] covers the same-environment handoff, launch-time capture, cleartext-path minimization, legacy precedence, absent environments, later-different environments, deleted selections, and incomplete installs.
 
+### Managed venv link recovery
+
+When an upstream update leaves `hermes-agent/venv` missing or dangling, the desktop restores its compatibility link to the newest healthy managed venv under `installs/*/environments/*/venv`.
+
+[[src/main/installer.ts#repairHermesVenvLink]] runs during local install checks, deep verification, and adoption validation. It requires a Python executable in the candidate, removes only a dangling link, and never replaces an ordinary venv directory. [[tests/installer-home-override.test.ts]] covers the missing-link, dangling-link, newest-candidate, and real-directory safety cases.
+
 ### Single-run installation
 
 After confirmation, one mounted install screen starts exactly one installer run even if the active locale changes while that run is pending.
