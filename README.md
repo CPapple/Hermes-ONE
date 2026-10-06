@@ -4,7 +4,7 @@
 <p align="center">
   <a href="https://discord.gg/Fqu72h8z"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
   <a href="https://github.com/CPapple/Hermes-ONE/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
-  <a href="https://hermesone.org"><img src="https://img.shields.io/badge/Download-Releases-FF6600?style=for-the-badge" alt="Releases"></a>
+  <a href="https://github.com/CPapple/Hermes-ONE/releases/latest"><img src="https://img.shields.io/badge/Download-Releases-FF6600?style=for-the-badge" alt="Releases"></a>
 <a href="https://github.com/CPapple/Hermes-ONE/stargazers">
   <img src="https://img.shields.io/github/stars/CPapple/Hermes-ONE?style=for-the-badge&color=FFD700&label=Stars" alt="Stars">
 </a>
@@ -22,20 +22,7 @@
   <a href="README.es-LATAM.md">Español (LATAM)</a>
 </p>
 
-<p align="center">
-  
-  
-  
- <a href="https://www.star-history.com/fathah/hermes-desktop">
-  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=fathah/hermes-desktop&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=fathah/hermes-desktop" />
-   <img alt="Star History Rank" src="https://api.star-history.com/badge?repo=fathah/hermes-desktop" />
-  </picture>
- </a>
-</p>
-
-> **This project is in active development.** Features may change, and some things might break. If you run into a problem or have an idea, [open an issue](https://github.com/fathah/hermes-desktop/issues). Contributions are welcome!
+> **This project is in active development.** Features may change, and some things might break. If you run into a problem or have an idea, [open an issue](https://github.com/CPapple/Hermes-ONE/issues). Contributions are welcome!
 
 Hermes One is a community maintained native desktop app for installing, configuring, and chatting with [Hermes Agent](https://github.com/NousResearch/hermes-agent) — a self-improving AI assistant with tool use, multi-platform messaging, and a closed learning loop.
 
@@ -68,37 +55,18 @@ Instead of managing the CLI by hand, the app walks through install, provider set
 
 ## Install
 
-<a href="https://hermesone.org"><img width="380" alt="Download Now" src="previews/download.webp" /></a>
+Download the installer for your platform from the [latest Hermes One release](https://github.com/CPapple/Hermes-ONE/releases/latest).
 
-<details>
-<summary>Windows</summary>
-<br/>
+| Platform                      | Download                                                                    | Notes                                                                            |
+| ----------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Windows (x64)                 | [Download installer](https://github.com/CPapple/Hermes-ONE/releases/latest) | Choose the `*-setup.exe` asset.                                                  |
+| macOS (Apple silicon / Intel) | [Download installer](https://github.com/CPapple/Hermes-ONE/releases/latest) | Choose the `.dmg` matching your Mac: `arm64` for Apple silicon, `x64` for Intel. |
 
-> **Windows users:** The installer is not code-signed. Windows SmartScreen will warn on first launch — click "More info" → "Run anyway".
+> The download links become available after the first GitHub Release is published. Source-code ZIP files are not required for normal installation.
 
-> **WSL users:** If the installer stalls at `Switching to root user to install dependencies...`, Playwright is waiting for a sudo password that has no TTY to read from. Grant passwordless sudo for the install, then revert when finished:
->
-> ```bash
-> echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/hermes-install
-> # …re-run the installer; once it finishes:
-> sudo rm /etc/sudoers.d/hermes-install
-> ```
->
-> Tracked in [#109](https://github.com/fathah/hermes-desktop/issues/109).
+> **Windows users:** Until the installer is code-signed, Windows SmartScreen may warn on first launch. Verify that you downloaded it from this repository's Releases page before choosing “More info” → “Run anyway”.
 
-</details>
-
-<details>
-<summary>Fedora (RPM)</summary>
-<br/>
-
-```bash
-sudo dnf install ./hermes-desktop-<version>.rpm
-```
-
-> **Fedora users:** The `.rpm` is not GPG-signed. If your system enforces signature checking, append `--nogpgcheck` to the install command. Auto-update is not supported for `.rpm` builds (limitation of `electron-updater`); reinstall the new `.rpm` to update.
-
-</details>
+> **macOS users:** The `.dmg` will be published only after it has been signed and notarized. This avoids asking users to bypass Gatekeeper.
 
 ## Preview
 
@@ -335,7 +303,7 @@ Source of truth: [`src/main/secrets/`](src/main/secrets/).
 
 ## Contributing
 
-Contributions are welcome! Check out the [Contributing Guide](CONTRIBUTING.md) to get started. If you're not sure where to begin, take a look at the [open issues](https://github.com/fathah/hermes-desktop/issues). Found a bug or have a feature request? [File an issue](https://github.com/fathah/hermes-desktop/issues/new).
+Contributions are welcome! Check out the [Contributing Guide](CONTRIBUTING.md) to get started. If you're not sure where to begin, take a look at the [open issues](https://github.com/CPapple/Hermes-ONE/issues). Found a bug or have a feature request? [File an issue](https://github.com/CPapple/Hermes-ONE/issues/new).
 
 ## Related Project
 
